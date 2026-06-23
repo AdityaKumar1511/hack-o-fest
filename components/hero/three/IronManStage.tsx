@@ -30,24 +30,10 @@ import { heroState, damp } from "./heroState";
 const CAM_POS: [number, number, number] = [0, 0, 7.4];
 const CAM_LOOK: [number, number, number] = [0, 0, 0];
 
-/** Lerp the suit's material opacity toward `v` so it eases in/out at the hero
- *  edges. Materials were marked `transparent` at clone time (IronManModel). */
-function applyVis(group: THREE.Group, v: number) {
-  group.visible = v > 0.01;
-  group.traverse((o) => {
-    const m = o as THREE.Mesh;
-    if (m.isMesh && m.material) {
-      const mats = Array.isArray(m.material) ? m.material : [m.material];
-      for (const mat of mats) (mat as THREE.Material).opacity = v;
-    }
-  });
-}
-
 export function IronManStage({ highQuality }: { highQuality: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
   const cameraPinned = useRef(false);
-  const fadeVis = useRef(0); // current eased opacity, chases heroState.vis
 
   useFrame((_, rawDt) => {
     if (!heroState.active) return;
@@ -74,7 +60,6 @@ export function IronManStage({ highQuality }: { highQuality: boolean }) {
       g.position.set(beat.model[0], beat.model[1], beat.model[2]);
       g.rotation.y = beat.rotY;
       g.scale.setScalar(beat.scale);
-      applyVis(g, 1); // fully visible, no fade
       return;
     }
 
@@ -93,10 +78,6 @@ export function IronManStage({ highQuality }: { highQuality: boolean }) {
     // front-on at every rest point while still feeling alive / powered-up.
     const bob = Math.sin(performance.now() * 0.0011) * 0.04;
     g.position.y = damp(g.position.y, beat.model[1], 6, dt) + bob;
-
-    // fade the suit in/out at the hero's scroll edges (skill STEP 6)
-    fadeVis.current = damp(fadeVis.current, heroState.vis, 4, dt);
-    applyVis(g, fadeVis.current);
   });
 
   return (

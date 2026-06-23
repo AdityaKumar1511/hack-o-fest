@@ -17,9 +17,6 @@ export type HeroState = {
   highQuality: boolean;
   /** viewport width in px, used to damp the left/right model travel on mobile. */
   vw: number;
-  /** 0→1 model fade, tweened by enter/leave triggers so the suit eases in at
-   *  the hero's edges instead of hard-popping (skill STEP 6). */
-  vis: number;
 };
 
 export const heroState: HeroState = {
@@ -28,7 +25,6 @@ export const heroState: HeroState = {
   reduced: false,
   highQuality: true,
   vw: typeof window !== "undefined" ? window.innerWidth : 1440,
-  vis: 0,
 };
 
 /** Number of real <section> beats in the hero. */

@@ -86,24 +86,26 @@ export function HeroExperience() {
     const { gsap, ScrollTrigger } = registerGsap();
 
     const ctx = gsap.context(() => {
-      // Master driver. End at "bottom bottom": active while scrollY ∈ [0, 300vh]
-      // of the 400vh wrapper — exactly the range where only hero content is in
-      // view (the marquee/Tracks below only touch the viewport's bottom edge at
-      // the very end, so the fixed canvas never paints over them). The onToggle
-      // visibility gate cleans up the boundary frame.
+      // SINGLE master driver — one source of truth for progress, the 4 backdrop
+      // cross-fades, the exit dissolve, and the active gate.
       //
-      // We remap raw→choreo so the final REST beat is reached a touch BEFORE the
-      // end and then HOLDS. Without this the suit would only hit its resting
-      // pose on the last active frame and, with damping, never fully settle.
-      // REST_SETTLE = 0.85 → suit is centered + landed by the time section 4 is
-      // framed, and dwells there for the last stretch of scroll.
-      const REST_SETTLE = 0.85;
+      // End at "bottom top": the stage stays alive across the ENTIRE 400vh
+      // wrapper (scrollY 0 → 400vh), so the suit never vanishes mid-section —
+      // including beat 3, whose CTA (SUIT UP / CLAIM YOUR ID) sits low and is
+      // only centered around scrollY ≈ 340vh.
+      //
+      // raw→choreo: with this range, sections fill the viewport at raw =
+      // 0,0.25,0.5,0.75. We divide by REST_SETTLE = 0.75 so the four beats land
+      // exactly on those stops and the final REST pose is reached when section 4
+      // first fills the viewport, then HELD for the last quarter while you read
+      // the CTA and the stage dissolves out into the marquee.
+      const REST_SETTLE = 0.75;
       ScrollTrigger.create({
         trigger: wrap,
         start: "top top",
-        end: "bottom bottom",
+        end: "bottom top",
         onUpdate: (self) => {
-          const raw = self.progress; // 0..1 over the scrubbable wrapper
+          const raw = self.progress; // 0..1 over the full wrapper travel
           const choreo = Math.min(1, raw / REST_SETTLE); // beats 0→3, then holds
           heroState.progress = choreo;
           // on-demand loop (reduced motion) needs an explicit frame request
@@ -123,40 +125,20 @@ export function HeroExperience() {
           if (bgGoldRef.current) bgGoldRef.current.style.opacity = String(amt(1));
           if (bgCyanRef.current) bgCyanRef.current.style.opacity = String(amt(2));
           if (bgRestRef.current) bgRestRef.current.style.opacity = String(amt(3));
+
+          // Exit dissolve: hold the stage fully opaque through the CTA reading
+          // zone, then fade the whole layer (model + backdrops together) to 0
+          // over the last sliver of scroll so it hands off smoothly to the
+          // marquee instead of hard-cutting or painting over it.
+          const exit = Math.max(0, (raw - 0.9) / 0.1); // 0 until raw .9 → 1 at 1
+          stage.style.opacity = String(1 - exit);
         },
         onToggle: (self) => {
+          // Active across the whole wrapper; hard-hide only once fully past it
+          // so the fixed layer can never bleed behind the Tracks section.
           heroState.active = self.isActive;
-          // hard-hide the fixed layer the instant the hero leaves the viewport
-          // so it can never bleed behind the Tracks section that follows.
-          stage.style.opacity = self.isActive ? "1" : "0";
           stage.style.visibility = self.isActive ? "visible" : "hidden";
         },
-      });
-
-      // (2) VISIBILITY (skill STEP 6) — tween heroState.vis so the suit's
-      // material opacity eases in as the hero enters and out as it leaves,
-      // instead of hard-popping. We tween a property on the singleton via a
-      // proxy object; the render loop reads heroState.vis every frame.
-      const visProxy = { v: 0 };
-      const setVis = (to: number, dur: number, ease: string) =>
-        gsap.to(visProxy, {
-          v: to,
-          duration: dur,
-          ease,
-          onUpdate: () => {
-            heroState.vis = visProxy.v;
-            if (heroState.reduced) invalidate();
-          },
-        });
-      heroState.vis = 0;
-      ScrollTrigger.create({
-        trigger: wrap,
-        start: "top 85%",
-        end: "bottom top",
-        onEnter: () => setVis(1, 0.9, "power2.out"),
-        onLeave: () => setVis(0, 0.5, "power2.in"),
-        onEnterBack: () => setVis(1, 0.9, "power2.out"),
-        onLeaveBack: () => setVis(0, 0.5, "power2.in"),
       });
 
       // light text reveals per beat (skipped under reduced motion)
