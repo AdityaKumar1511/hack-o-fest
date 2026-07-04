@@ -10,6 +10,7 @@ const links = [
   { href: "/#timeline", label: "Timeline" },
   { href: "/id-card", label: "ID Card" },
   { href: "/status", label: "Team Status" },
+  {href: "/sponsors", label: "Sponsors"}
 ];
 
 export function Nav() {
