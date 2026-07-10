@@ -1,4 +1,5 @@
 import { HeroExperience } from "@/components/hero/HeroExperience";
+import { NewHero } from "@/components/hero/newHero";
 import { Tracks } from "@/components/tracks/Tracks";
 import { Themes } from "@/components/themes/Themes";
 import { Prizes } from "@/components/prizes/Prizes";
@@ -11,7 +12,8 @@ import { Manifesto } from "@/components/ui/Manifesto";
 export default function HomePage() {
   return (
     <main>
-      <HeroExperience />
+      {/* <HeroExperience /> */}
+      <NewHero />
       <MarqueeTicker
         items={[
           "REGISTRATION OPEN",
