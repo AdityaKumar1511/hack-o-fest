@@ -11,6 +11,7 @@ const links = [
   { href: "/id-card", label: "ID Card" },
   { href: "/status", label: "Team Status" },
   { href: "/about", label: "About" },
+  {href: "/sponsors", label: "Sponsors"}
 ];
 
 export function Nav() {
