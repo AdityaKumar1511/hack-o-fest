@@ -22,7 +22,13 @@ function pickRandom<T>(arr: T[]): T {
 
 /* ─── component ──────────────────────────────────────────────── */
 export function Preloader() {
-  const image = useMemo(() => pickRandom(LOADING_IMAGES), []);
+  const [image, setImage] = useState(LOADING_IMAGES[0]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setImage(pickRandom(LOADING_IMAGES));
+    setMounted(true);
+  }, []);
 
   /* progress 0 → 100 */
   const progress    = useMotionValue(0);
